@@ -2,7 +2,7 @@
 - 👀 I’m interested in becoming fullstack web developer
 - 🌱 I’m currently learning frontend
 - 💞️ I’m looking to collaborate on 
-- 📫 How to reach me @ratn1k_ - ds
+- 📫 How to reach me 
 - 😄 Pronouns: HE, Man, men!!! I am a real man.
 - ⚡ Fun fact: gays are killed in afganistan
 
