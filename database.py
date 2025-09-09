@@ -39,6 +39,25 @@ class Database:
                            CURRENT_TIMESTAMP
                        )
                        ''')
+        # Таблица для домашних заданий
+        cursor.execute('''
+                               CREATE TABLE IF NOT EXISTS ready_homework
+                               (
+                                   id
+                                   INTEGER
+                                   PRIMARY
+                                   KEY
+                                   AUTOINCREMENT,
+                                   chat_id
+                                   INTEGER,
+                                   text
+                                   TEXT,
+                                   created_at
+                                   TIMESTAMP
+                                   DEFAULT
+                                   CURRENT_TIMESTAMP
+                               )
+                               ''')
 
         # Таблица для дежурных
         cursor.execute('''
@@ -89,28 +108,28 @@ class Database:
                        ''')
 
         # Таблица для напоминаний
-        cursor.execute('''
-                       CREATE TABLE IF NOT EXISTS reminders
-                       (
-                           id
-                           INTEGER
-                           PRIMARY
-                           KEY
-                           AUTOINCREMENT,
-                           chat_id
-                           INTEGER,
-                           message
-                           TEXT,
-                           reminder_time
-                           TIME,
-                           job_id
-                           TEXT,
-                           created_at
-                           TIMESTAMP
-                           DEFAULT
-                           CURRENT_TIMESTAMP
-                       )
-                       ''')
+        #cursor.execute('''
+                      # CREATE TABLE IF NOT EXISTS reminders
+                      # (
+                      #     id
+                      #     INTEGER
+                      #     PRIMARY
+                      #     KEY
+                      #     AUTOINCREMENT,
+                      #     chat_id
+                      #     INTEGER,
+                      #     message
+                       #    TEXT,
+                       #    reminder_time
+                       #    TIME,
+                        #   job_id
+                         #  TEXT,
+                         #  created_at
+                         #  TIMESTAMP
+                         #  DEFAULT
+                          # CURRENT_TIMESTAMP
+                      # )
+                     #  ''')
 
         # Таблица для архивации сообщений
         cursor.execute('''
@@ -217,6 +236,29 @@ class Database:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT text FROM homework WHERE chat_id = ? ORDER BY created_at DESC LIMIT 1",
+            (chat_id,)
+        )
+        result = cursor.fetchone()
+        conn.close()
+        return result[0] if result else None
+
+    #-------------------------------------------------------------------------------
+    # Ready homework methods
+    def save_ready_homework(self, chat_id: int, text: str):
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO ready_homework (chat_id, text) VALUES (?, ?)",
+            (chat_id, text)
+        )
+        conn.commit()
+        conn.close()
+
+    def get_ready_homework(self, chat_id: int) -> Optional[str]:
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT text FROM ready_homework WHERE chat_id = ? ORDER BY created_at DESC LIMIT 1",
             (chat_id,)
         )
         result = cursor.fetchone()

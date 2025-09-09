@@ -46,6 +46,7 @@ class ClassBot:
             "/start - начать работу\n"
             "/help - помощь\n"
             "/get_hw - получить домашнее задание\n"
+            "/get_ready_hw - получить готовое домашнее задание\n"
             "/duty - узнать дежурных\n"
             "/schedule - получить расписание\n\n"
         )
@@ -54,17 +55,18 @@ class ClassBot:
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработчик команды /help"""
         help_text = (
-            "📖 Помощь по командам бота:\n\n"
+            "📖 Помощь по командам бота v1.2:\n\n"
             "Для всех:\n"
             "/get_hw - получить домашнее задание\n"
+            "/get_ready_hw - получить готовое домашнее задание\n"
             "/duty - узнать дежурных\n"
             "/schedule - получить расписание\n\n"
             "Для админов:\n"
             "/post_hw [текст] - установить ДЗ\n"
             "/set_duty @user1 @user2 - установить дежурных\n"
             "/post_schedule [текст] - установить расписание\n"
-            "/remind [время] [сообщение] - установить напоминание\n"
             "/get_chat_log - получить лог чата\n"
+            "https://nash10Aklacc.ru/ - наш сайт, список изменений бота\n"
             "/get_user_log @user - получить лог пользователя\n\n"
         )
         await update.message.reply_text(help_text)
@@ -95,6 +97,34 @@ class ClassBot:
             await update.message.reply_text(f"📚 Домашнее задание:\n\n{homework}")
         else:
             await update.message.reply_text("📚 Домашнее задание не задано.")
+
+
+# ---------------------------------------------------------------------------------------------
+    async def post_ready_hw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Установка домашнего задания"""
+        if not await self.is_admin(update, context):
+            await update.message.reply_text("❌ Эта команда только для администраторов!")
+            return
+
+        if not context.args:
+            await update.message.reply_text("❌ Укажите текст готового домашнего задания!")
+            return
+
+        ready_homework_text = ' '.join(context.args)
+        chat_id = update.effective_chat.id
+
+        db.save_homework(chat_id, ready_homework_text)
+        await update.message.reply_text("✅ Готовое домашнее задание сохранено!")
+
+    async def get_hw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Получение домашнего задания"""
+        chat_id = update.effective_chat.id
+        ready_homework = db.get_ready_homework(chat_id)
+
+        if ready_homework:
+            await update.message.reply_text(f"📚 Готовое домашнее задание:\n\n{ready_homework}")
+        else:
+            await update.message.reply_text("📚 Готового домашнего задания нет.")
 
     # Duty functions
     async def set_duty(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -151,47 +181,47 @@ class ClassBot:
             await update.message.reply_text("📅 Расписание не установлено.")
 
     # Reminder functions
-    async def remind(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Установка напоминания"""
-        if not await self.is_admin(update, context):
-            await update.message.reply_text("❌ Эта команда только для администраторов!")
-            return
+  #  async def remind(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+      #  """Установка напоминания"""
+      #  if not await self.is_admin(update, context):
+        #    await update.message.reply_text("❌ Эта команда только для администраторов!")
+        #    return
 
-        if len(context.args) < 2:
-            await update.message.reply_text("❌ Формат: /remind HH:MM текст напоминания")
-            return
+      #  if len(context.args) < 2:
+       #     await update.message.reply_text("❌ Формат: /remind HH:MM текст напоминания")
+       #     return
 
-        time_pattern = r'(\d{1,2}):(\d{2})'
-        match = re.match(time_pattern, context.args[0])
+      #  time_pattern = r'(\d{1,2}):(\d{2})'
+      #  match = re.match(time_pattern, context.args[0])
 
-        if not match:
-            await update.message.reply_text("❌ Неверный формат времени. Используйте HH:MM")
-            return
+      #  if not match:
+      #      await update.message.reply_text("❌ Неверный формат времени. Используйте HH:MM")
+      #      return
 
-        hours, minutes = map(int, match.groups())
-        reminder_text = ' '.join(context.args[1:])
+      #  hours, minutes = map(int, match.groups())
+       # reminder_text = ' '.join(context.args[1:])
 
-        job_id = f"reminder_{update.effective_chat.id}_{datetime.now().timestamp()}"
+     #   job_id = f"reminder_{update.effective_chat.id}_{datetime.now().timestamp()}"
 
-        db.save_reminder(update.effective_chat.id, reminder_text, f"{hours:02d}:{minutes:02d}", job_id)
+     #   db.save_reminder(update.effective_chat.id, reminder_text, f"{hours:02d}:{minutes:02d}", job_id)
 
-        context.job_queue.run_daily(
-            self.send_reminder,
-            time=time(hour=hours, minute=minutes),
-            data=job_id,
-            name=job_id
-        )
+      #  context.job_queue.run_daily(
+      #      self.send_reminder,
+      #      time=time(hour=hours, minute=minutes),
+   #         data=job_id,
+       #     name=job_id
+       # )
 
-        await update.message.reply_text(f"✅ Напоминание установлено на {hours:02d}:{minutes:02d}")
+     #   await update.message.reply_text(f"✅ Напоминание установлено на {hours:02d}:{minutes:02d}")
 
-    async def send_reminder(self, context: CallbackContext):
-        """Отправка напоминания"""
-        job_id = context.job.data
-        reminder_data = db.get_reminder(job_id)
+  #  async def send_reminder(self, context: CallbackContext):
+  #      """Отправка напоминания"""
+   #     job_id = context.job.data
+   #     reminder_data = db.get_reminder(job_id)
 
-        if reminder_data:
-            chat_id, message = reminder_data
-            await context.bot.send_message(chat_id, f"⏰ Напоминание: {message}")
+   #     if reminder_data:
+    #        chat_id, message = reminder_data
+    #        await context.bot.send_message(chat_id, f"⏰ Напоминание: {message}")
 
     # Archive functions
     async def archive_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
