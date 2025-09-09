@@ -328,7 +328,6 @@ class ClassBot:
         self.application.add_handler(CommandHandler("duty", self.duty))
         self.application.add_handler(CommandHandler("post_schedule", self.post_schedule))
         self.application.add_handler(CommandHandler("schedule", self.schedule))
-        self.application.add_handler(CommandHandler("remind", self.remind))
         self.application.add_handler(CommandHandler("get_chat_log", self.get_chat_log))
         self.application.add_handler(CommandHandler("get_user_log", self.get_user_log))
         self.application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, self.archive_message))
