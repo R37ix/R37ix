@@ -48,6 +48,7 @@ class ClassBot:
             "/get_hw - получить домашнее задание\n"
             "/get_ready_hw - получить готовое домашнее задание\n"
             "/duty - узнать дежурных\n"
+            "/t_schedule - узнать расписание звонков\n"
             "/schedule - получить расписание\n\n"
         )
         await update.message.reply_text(welcome_text)
@@ -55,18 +56,22 @@ class ClassBot:
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработчик команды /help"""
         help_text = (
-            "📖 Помощь по командам бота v1.2:\n\n"
+            "📖 Помощь по командам бота v1.3.1:\n\n"
             "Для всех:\n"
             "/get_hw - получить домашнее задание\n"
             "/get_ready_hw - получить готовое домашнее задание\n"
             "/duty - узнать дежурных\n"
+            "/t_schedule - узнать расписание звонков\n"
             "/schedule - получить расписание\n\n"
             "Для админов:\n"
             "/post_hw [текст] - установить ДЗ\n"
+            "/post_t_schedule [текст] - установить график звонков\n"
+            "/post_ready_hw [текст] - установить готовое ДЗ\n"
             "/set_duty @user1 @user2 - установить дежурных\n"
             "/post_schedule [текст] - установить расписание\n"
             "/get_chat_log - получить лог чата\n"
-            "https://nash10Aklacc.ru/ - наш сайт, список изменений бота\n"
+            "https://nash10Aklacc.ru/ - наш сайт, список изменений бота (в 2.0 версии)\n"
+            "/generate [промпт] (в 2.1 версии)\n"
             "/get_user_log @user - получить лог пользователя\n\n"
         )
         await update.message.reply_text(help_text)
@@ -101,7 +106,7 @@ class ClassBot:
 
 # ---------------------------------------------------------------------------------------------
     async def post_ready_hw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Установка домашнего задания"""
+        """Установка готового домашнего задания"""
         if not await self.is_admin(update, context):
             await update.message.reply_text("❌ Эта команда только для администраторов!")
             return
@@ -113,18 +118,44 @@ class ClassBot:
         ready_homework_text = ' '.join(context.args)
         chat_id = update.effective_chat.id
 
-        db.save_homework(chat_id, ready_homework_text)
+        db.save_ready_homework(chat_id, ready_homework_text)  # исправлено
         await update.message.reply_text("✅ Готовое домашнее задание сохранено!")
 
-    async def get_hw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Получение домашнего задания"""
+    async def get_ready_hw(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Получение готового домашнего задания"""
         chat_id = update.effective_chat.id
         ready_homework = db.get_ready_homework(chat_id)
-
         if ready_homework:
-            await update.message.reply_text(f"📚 Готовое домашнее задание:\n\n{ready_homework}")
+            await update.message.reply_text(f"📖 Готовое домашнее задание:\n{ready_homework}")
         else:
-            await update.message.reply_text("📚 Готового домашнего задания нет.")
+            await update.message.reply_text("❌ Готовое домашнее задание пока не задано.")
+
+        # ---------------------------------------------------------------------------------------------
+
+    async def post_t_schedule(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Установка расписания звонков"""
+        if not await self.is_admin(update, context):
+            await update.message.reply_text("❌ Эта команда только для администраторов!")
+            return
+
+        if not context.args:
+            await update.message.reply_text("❌ Укажите расписание звонков!")
+            return
+
+        time_text = ' '.join(context.args)
+        chat_id = update.effective_chat.id
+
+        db.post_t_schedule(chat_id, time_text)  # ИСПРАВЛЕНО: save_time_schedule вместо time
+        await update.message.reply_text("✅ Расписание звонков сохранено!")
+
+    async def t_schedule(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Получение расписания звонков"""
+        chat_id = update.effective_chat.id
+        t_schedule = db.t_schedule(chat_id)  # ИСПРАВЛЕНО: get_time_schedule вместо time
+        if t_schedule:
+            await update.message.reply_text(f"⏰ Расписание звонков:\n{t_schedule}")
+        else:
+            await update.message.reply_text("❌ Расписания звонков пока нет.")
 
     # Duty functions
     async def set_duty(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -327,9 +358,13 @@ class ClassBot:
         self.application.add_handler(CommandHandler("set_duty", self.set_duty))
         self.application.add_handler(CommandHandler("duty", self.duty))
         self.application.add_handler(CommandHandler("post_schedule", self.post_schedule))
+        self.application.add_handler(CommandHandler("post_t_schedule", self.post_t_schedule))
+        self.application.add_handler(CommandHandler("t_schedule", self.t_schedule))
         self.application.add_handler(CommandHandler("schedule", self.schedule))
         self.application.add_handler(CommandHandler("get_chat_log", self.get_chat_log))
         self.application.add_handler(CommandHandler("get_user_log", self.get_user_log))
+        self.application.add_handler(CommandHandler("post_ready_hw", self.post_ready_hw))
+        self.application.add_handler(CommandHandler("get_ready_hw", self.get_ready_hw))
         self.application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND, self.archive_message))
         self.application.add_error_handler(self.error_handler)
 

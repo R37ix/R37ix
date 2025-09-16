@@ -41,23 +41,23 @@ class Database:
                        ''')
         # Таблица для домашних заданий
         cursor.execute('''
-                               CREATE TABLE IF NOT EXISTS ready_homework
-                               (
-                                   id
-                                   INTEGER
-                                   PRIMARY
-                                   KEY
-                                   AUTOINCREMENT,
-                                   chat_id
-                                   INTEGER,
-                                   text
-                                   TEXT,
-                                   created_at
-                                   TIMESTAMP
-                                   DEFAULT
-                                   CURRENT_TIMESTAMP
-                               )
-                               ''')
+                        CREATE TABLE IF NOT EXISTS ready_homework
+                        (
+                        id
+                        INTEGER
+                        PRIMARY
+                        KEY
+                        AUTOINCREMENT,
+                        chat_id
+                        INTEGER,
+                        text
+                        TEXT,
+                        created_at
+                        TIMESTAMP
+                        DEFAULT
+                        CURRENT_TIMESTAMP
+                        )
+                        ''')
 
         # Таблица для дежурных
         cursor.execute('''
@@ -106,6 +106,24 @@ class Database:
                            CURRENT_TIMESTAMP
                        )
                        ''')
+        cursor.execute('''
+                        CREATE TABLE IF NOT EXISTS t_schedule
+                        (
+                            id
+                            INTEGER
+                            PRIMARY
+                            KEY
+                            AUTOINCREMENT,
+                            chat_id
+                            INTEGER,
+                            text
+                            TEXT,
+                            created_at
+                            TIMESTAMP
+                            DEFAULT
+                            CURRENT_TIMESTAMP
+                               )
+                               ''')
 
         # Таблица для напоминаний
         #cursor.execute('''
@@ -259,6 +277,29 @@ class Database:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT text FROM ready_homework WHERE chat_id = ? ORDER BY created_at DESC LIMIT 1",
+            (chat_id,)
+        )
+        result = cursor.fetchone()
+        conn.close()
+        return result[0] if result else None
+
+#------------------------------------------------------------------------
+    # Time schedule methods
+    def post_t_schedule(self, chat_id: int, text: str):  # БЫЛО: post_t_schedule
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "INSERT INTO time (chat_id, text) VALUES (?, ?)",
+            (chat_id, text)
+        )
+        conn.commit()
+        conn.close()
+
+    def t_schedule(self, chat_id: int) -> Optional[str]:  # БЫЛО: t_schedule
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT text FROM time WHERE chat_id = ? ORDER BY created_at DESC LIMIT 1",
             (chat_id,)
         )
         result = cursor.fetchone()
